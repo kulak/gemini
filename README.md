@@ -1,6 +1,6 @@
 # Gemini
 
-[Gemini protocol](https://gitlab.com/gemini-specification/protocol/-/blob/master/specification.gmi) and [Titan Protocl](https://communitywiki.org/wiki/Titan) GO package for the server using [net/http](https://pkg.go.dev/net/http) style API.
+[Gemini protocol](https://gitlab.com/gemini-specification/protocol/-/blob/master/specification.gmi) and [Titan protocol](https://communitywiki.org/wiki/Titan) GO package for the server using [net/http](https://pkg.go.dev/net/http) style API.
 
 The package was created after attempt to use a couple of existing libraries for the server side and not finding those satisfactory in terms of exposed API.
 
