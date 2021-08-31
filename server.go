@@ -76,8 +76,6 @@ func handleConnection(conn *tls.Conn, handler Handler) {
 	handler.ServeGemini(r, request)
 }
 
-var errorRequestTooLong = errors.New("request exceeds 1024 length")
-
 func getRequest(conn *tls.Conn) (*Request, error) {
 	headerBytes, err := readHeader(conn)
 	if err != nil {

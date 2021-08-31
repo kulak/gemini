@@ -1,6 +1,8 @@
 package gemini
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -92,5 +94,29 @@ func ServeFileName(name string, mimeType string) HandlerFunc {
 			panic(err)
 		}
 		ServeFile(f, mimeType)(w, r)
+	}
+}
+
+var errorRequestTooLong = errors.New("request exceeds 1024 length")
+
+func readHeader(conn io.Reader) ([]byte, error) {
+	var line []byte
+	delim := []byte("\r\n")
+	// A small buffer is inefficient but the maximum length of the header is small so it's okay
+	buf := make([]byte, 1)
+
+	for {
+		_, err := conn.Read(buf)
+		if err != nil {
+			return []byte{}, err
+		}
+
+		line = append(line, buf...)
+		if bytes.HasSuffix(line, delim) {
+			return line[:len(line)-len(delim)], nil
+		}
+		if len(line) > 1024 {
+			return []byte{}, errorRequestTooLong
+		}
 	}
 }

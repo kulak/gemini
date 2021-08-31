@@ -9,10 +9,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	urlpkg "net/url"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // NoBody is an io.ReadCloser with no bytes. Read always returns EOF
@@ -149,18 +147,6 @@ func (r *Request) Certificate() *x509.Certificate {
 	return nil
 }
 
-func dateToStr(t time.Time) string {
-	return strconv.FormatInt(t.Unix(), 36)
-}
-
-func (r *Request) UserName() []string {
-	cert := r.Certificate()
-	if cert == nil {
-		return []string{""}
-	}
-	return []string{cert.Subject.CommonName, cert.SerialNumber.String(), dateToStr(cert.NotBefore), dateToStr(cert.NotAfter)}
-}
-
 // Context returns the request's context. To change the context, use
 // WithContext.
 //
@@ -222,11 +208,11 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 // exact value (instead of -1), GetBody is populated (so 307 and 308
 // redirects can replay the body), and Body is set to NoBody if the
 // ContentLength is 0.
-func NewRequestWithContext(ctx context.Context, url string, body io.Reader) (*Request, error) {
+func NewRequestWithContext(ctx context.Context, urlStr string, body io.Reader) (*Request, error) {
 	if ctx == nil {
 		return nil, errors.New("gemini: nil Context")
 	}
-	u, err := urlpkg.Parse(url)
+	u, err := url.Parse(urlStr)
 	if err != nil {
 		return nil, err
 	}
@@ -279,11 +265,4 @@ func (r *TitanRequest) clientRequest(body io.Reader) error {
 		}
 	}
 	return nil
-}
-
-func (r *TitanRequest) closeBody() error {
-	if r.Body == nil {
-		return nil
-	}
-	return r.Body.Close()
 }
