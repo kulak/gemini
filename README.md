@@ -8,6 +8,10 @@ The package follows core design pattern used in standard [net/http](https://pkg.
 
 Titan protocol tested with [Lagrange](https://git.skyjake.fi/gemini/lagrange) browser.
 
+Current implementation is server focused and does not provide API to send requests to GEMINI server.
+
+At the server level library implements GEMINI and TITAN protocols including support for Client certificates.
+
 ## Example Server
 
 To run server one needs to generate appropriate server certificate.
