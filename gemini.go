@@ -57,11 +57,6 @@ func (f HandlerFunc) ServeGemini(w ResponseWriter, r *Request) {
 	f(w, r)
 }
 
-// SimplifyStatus simplify the response status by omiting the detailed second digit of the status code.
-func SimplifyStatus(status int) int {
-	return (status / 10) * 10
-}
-
 func NotFound(w ResponseWriter, req *Request) {
 	w.WriteStatusMsg(StatusNotFound, "404 Resource Not Found")
 }

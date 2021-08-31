@@ -13,6 +13,6 @@ func TestReset(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/da", r.URL.Path)
 	require.Equal(t, "text/plain", r.Titan.Mime)
-	require.Equal(t, 23, r.Titan.Size)
+	require.Equal(t, int64(23), r.Titan.Size)
 	require.Equal(t, "", r.Titan.Token)
 }
