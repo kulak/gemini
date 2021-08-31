@@ -1,15 +1,12 @@
 package gemini
 
 import (
-	"bytes"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/url"
-	"strconv"
-	"strings"
 )
 
 // ListenAndServe create a TCP server on the specified address and pass
@@ -82,81 +79,14 @@ func handleConnection(conn *tls.Conn, handler Handler) {
 var errorRequestTooLong = errors.New("request exceeds 1024 length")
 
 func getRequest(conn *tls.Conn) (*Request, error) {
-	var err error
-	var reqStr bytes.Buffer
-	var buf = make([]byte, 1)
-	var endCounter = 0
-	for endCounter < 2 {
-		var read int
-		read, err = conn.Read(buf)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read request: %v", err)
-		}
-		if read == 1 {
-			// read until CRLF or "\r\n" sequence
-			if (buf[0] == '\r' && endCounter == 0) || (buf[0] == '\n' && endCounter == 1) {
-				endCounter += 1
-			} else {
-				reqStr.Write(buf)
-			}
-		} else {
-			return nil, errors.New("read zero bytes")
-		}
-		if reqStr.Len() > 1024 {
-			return nil, errorRequestTooLong
-		}
-	}
-	log.Printf("raw request: %s", reqStr.String())
-	r := &Request{}
-	return r, r.Reset(conn, reqStr.String())
-}
-
-func (r *Request) Reset(conn *tls.Conn, rawurl string) error {
-	r.Body = conn
-	r.conn = conn
-	r.Titan.Mime = ""
-	r.Titan.Size = 0
-	r.Titan.Token = ""
-	var err error
-	r.URL, err = url.ParseRequestURI(rawurl)
+	headerBytes, err := readHeader(conn)
 	if err != nil {
-		return fmt.Errorf("failed to parse request: %v, error: %v", rawurl, err)
+		return nil, err
 	}
-	if r.URL.Scheme == "" {
-		return fmt.Errorf("request is missing scheme: %v", rawurl)
-	}
-	if r.URL.Scheme == SchemaTitan {
-		parts := strings.Split(r.URL.Path, ";")
-		if len(parts) < 2 {
-			return errors.New("titan parameters expected")
-		}
-		r.URL.Path, parts = parts[0], parts[1:]
-		for _, part := range parts {
-			kv := strings.Split(part, "=")
-			if len(kv) != 2 {
-				continue
-			}
-			key := kv[0]
-			val := kv[1]
-			switch key {
-			case "token":
-				r.Titan.Token = val
-			case "mime":
-				r.Titan.Mime = val
-			case "size":
-				r.Titan.Size, err = strconv.Atoi(val)
-				if err != nil {
-					return fmt.Errorf("failed to parse titan size parameter: %s", val)
-				}
-			}
-		}
-	} else {
-		// Gemini specific handling
-		if r.URL.Path == "" {
-			r.URL.Path = "/"
-		}
-	}
-	return err
+	header := string(headerBytes)
+	log.Printf("raw request: %s", header)
+	r := &Request{}
+	return r, r.Reset(conn, header)
 }
 
 type response struct {
@@ -166,6 +96,19 @@ type response struct {
 }
 
 var _ ResponseWriter = (*response)(nil)
+
+func (w *response) WriteRequest(req *url.URL) error {
+	if w.headerWritten {
+		return errors.New("header has been sent already")
+	}
+	_, w.err = fmt.Fprintf(w.conn, "%s\r\n", req)
+	if w.err != nil {
+		w.err = fmt.Errorf("failed to write request header: %v", w.err)
+		return w.err
+	}
+	w.headerWritten = true
+	return nil
+}
 
 func (w *response) WriteStatusMsg(status StatusCode, msg string) error {
 	if w.headerWritten {
