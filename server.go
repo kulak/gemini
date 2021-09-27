@@ -82,9 +82,13 @@ func getRequest(conn *tls.Conn) (*Request, error) {
 		return nil, err
 	}
 	header := string(headerBytes)
-	log.Printf("raw request: %s", header)
+	decodedHeader, err := url.QueryUnescape(header)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode URL: %s, error: %v", header, err)
+	}
+	log.Printf("raw request: %s, decoded: %s", header, decodedHeader)
 	r := &Request{}
-	return r, r.Reset(conn, header)
+	return r, r.Reset(conn, decodedHeader)
 }
 
 type response struct {
