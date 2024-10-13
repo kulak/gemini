@@ -3,7 +3,7 @@ package gemini_test
 import (
 	"testing"
 
-	"github.com/kulak/gemini"
+	"github.com/knowfox/gemini"
 	"github.com/stretchr/testify/require"
 )
 
