@@ -1,4 +1,4 @@
-module github.com/knowfox/gemini
+module github.com/kulak/gemini
 
 go 1.16
 
