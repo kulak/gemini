@@ -41,6 +41,7 @@ type Request struct {
 }
 
 type TitanRequest struct {
+	Edit  bool
 	Token string
 	Mime  string
 
@@ -74,6 +75,7 @@ type TitanRequest struct {
 
 func (r *Request) Reset(conn *tls.Conn, rawurl string) error {
 	r.conn = conn
+	r.Titan.Edit = false
 	r.Titan.Mime = ""
 	r.Titan.Size = 0
 	r.Titan.Token = ""
@@ -103,6 +105,14 @@ func (r *Request) resetTitanURL() error {
 		return errors.New("titan parameters expected")
 	}
 	r.URL.Path, parts = parts[0], parts[1:]
+	if parts[0] == "edit" {
+		r.Titan.Edit = true
+		if len(parts[1:]) > 0 {
+			return errors.New("titan request can either be edit or have parameters")
+		}
+		return nil
+	}
+
 	for _, part := range parts {
 		kv := strings.Split(part, "=")
 		if len(kv) != 2 {
